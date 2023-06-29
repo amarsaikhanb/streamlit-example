@@ -7,8 +7,8 @@ import base64
 from transformers import pipeline
 import joblib
 from PIL import Image
-
-classifier = joblib.load("classifier.pkl")
+checkpoint = "openai/clip-vit-large-patch14"
+classifier = pipeline(model=checkpoint, task="zero-shot-image-classification")
 def get_best_label(predictions):
     max_score = 0
     label = ""
