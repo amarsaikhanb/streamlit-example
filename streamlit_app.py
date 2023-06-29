@@ -3,36 +3,37 @@ import altair as alt
 import math
 import pandas as pd
 import streamlit as st
+import base64
+from transformers import pipeline
+import joblib
+from PIL import Image
 
-"""
-# Welcome to Streamlit!
+classifier = joblib.load("classifier.pkl")
+def get_best_label(predictions):
+    max_score = 0
+    label = ""
+    for p in predictions:
+        if p['score'] > max_score:
+            max_score = p['score']
+            label = p['label']
+    return label, max_score
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
-
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
-
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+st.markdown('<h1 style="color:black;">Document Classifier</h1>', unsafe_allow_html=True)
+st.markdown('<h2 style="color:gray;">This model can classify input image to the following categories:</h2>', unsafe_allow_html=True)
+st.markdown('<h3 style="color:gray;"> <ul> <li>Invoice</li> <li>Bank statement</li> <li>Credit bureau</li> </ul> </h3>', unsafe_allow_html=True)
 
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
 
-    Point = namedtuple('Point', 'x y')
-    data = []
-
-    points_per_turn = total_points / num_turns
-
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+upload= st.file_uploader('Insert image for classification', type=['png','jpg'])
+c1, c2= st.columns(2)
+if upload is not None:
+  image = Image.open(upload)
+  c1.header('Input Image')
+  c1.image(image)
+  print("c1", c1)
+  print("c2", c2)
+  c2.header('Output')
+  c2.subheader('Predicted class :')
+  predictions = classifier(image, candidate_labels=["invoice, receipt", "bank statement, financial statement", "credit report"])
+  c2.subheader('Predicted class :' + str(get_best_label(predictions)))
+  c2.write(str(predictions))
